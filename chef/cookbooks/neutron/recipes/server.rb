@@ -43,6 +43,21 @@ template "/etc/neutron/api-paste.ini" do
   )
 end
 
+directory "/var/cache/neutron" do
+  owner "root"
+  group "root"
+  mode 0755
+  action :create
+end
+
+if node[:neutron][:use_ml2]
+  directory "/etc/neutron/plugins/ml2" do
+    owner "root"
+    group "root"
+    mode 0755
+    action :create
+  end
+end
 
 if node[:neutron][:use_ml2] && node[:neutron][:networking_plugin] != "vmware"
   plugin_cfg_path = "/etc/neutron/plugins/ml2/ml2_conf.ini"

@@ -47,7 +47,7 @@ directory "/var/cache/neutron" do
   owner "root"
   group "root"
   mode 0755
-  action:create
+  action :create
 end
 
 if node[:neutron][:use_ml2]
@@ -55,7 +55,8 @@ if node[:neutron][:use_ml2]
     owner "root"
     group "root"
     mode 0755
-    action:create
+    action :create
+  end
 end
 
 if node[:neutron][:use_ml2] && node[:neutron][:networking_plugin] != "vmware"

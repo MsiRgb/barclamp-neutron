@@ -54,6 +54,7 @@ debs:
     - neutron-plugin-openvswitch
     - neutron-plugin-openvswitch-agent
     - neutron-server
+    - neutron-plugin-metering-agent
 
 rpms:
   centos-6.4:

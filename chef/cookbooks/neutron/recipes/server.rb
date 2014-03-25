@@ -44,16 +44,16 @@ template "/etc/neutron/api-paste.ini" do
 end
 
 directory "/var/cache/neutron" do
-  owner "root"
-  group "root"
+  owner node[:neutron][:user]
+  group node[:neutron][:group]
   mode 0755
   action :create
 end
 
 if node[:neutron][:use_ml2]
   directory "/etc/neutron/plugins/ml2" do
-    owner "root"
-    group "root"
+    owner node[:neutron][:user]
+    group node[:neutron][:group]
     mode 0755
     action :create
   end

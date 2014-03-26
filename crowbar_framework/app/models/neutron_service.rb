@@ -13,7 +13,7 @@
 # limitations under the License. 
 # 
 
-class NeutronService < PacemakerServiceObject
+class NeutronService < ServiceObject
 
   def initialize(thelogger)
     super(thelogger)
@@ -30,8 +30,7 @@ class NeutronService < PacemakerServiceObject
       {
         "neutron-server" => {
           "unique" => false,
-          "count" => 1,
-          "cluster" => true
+          "count" => 1
         },
         "neutron-l3" => {
           "unique" => false,
@@ -77,7 +76,6 @@ class NeutronService < PacemakerServiceObject
     } unless nodes.nil? or nodes.length ==0
 
     base["attributes"]["neutron"]["service_password"] = '%012d' % rand(1e12)
-    base["attributes"][@bc_name][:db][:password] = random_password
 
     base
   end
@@ -108,21 +106,12 @@ class NeutronService < PacemakerServiceObject
       raise I18n.t("barclamp.neutron.deploy.missing_os_sdn_network")
     end
 
-    server_elements, server_nodes, ha_enabled = role_expand_elements(role, "neutron-server")
-
-    vip_networks = ["admin", "public"]
-
-    dirty = false
-    dirty = prepare_role_for_ha_with_haproxy(role, ["neutron", "ha", "enabled"], ha_enabled, vip_networks)
-    role.save if dirty
-
-    # All nodes must have a public IP, even if part of a cluster; otherwise
-    # the VIP can't be moved to the nodes
-    server_nodes.each do |n|
-      net_svc.allocate_ip "default", "public", "host", n
+    tnodes = role.override_attributes["neutron"]["elements"]["neutron-server"]
+    unless tnodes.nil? or tnodes.empty?
+      tnodes.each do |n|
+        net_svc.allocate_ip "default", "public", "host", n
+      end
     end
-
-    allocate_virtual_ips_for_any_cluster_in_networks_and_sync_dns(server_elements, vip_networks)
 
     tnodes = role.override_attributes["neutron"]["elements"]["neutron-l3"]
     unless tnodes.nil? or tnodes.empty?

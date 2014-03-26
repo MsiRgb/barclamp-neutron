@@ -31,7 +31,23 @@ include_recipe "neutron::database"
 include_recipe "neutron::common_config"
 
 
-keystone_settings = NeutronHelper.keystone_settings(node)
+env_filter = " AND keystone_config_environment:keystone-config-#{node[:neutron][:keystone_instance]}"
+keystones = search(:node, "recipes:keystone\\:\\:server#{env_filter}") || []
+if keystones.length > 0
+  keystone = keystones[0]
+  keystone = node if keystone.name == node.name
+else
+  keystone = node
+end
+
+keystone_host = keystone[:fqdn]
+keystone_protocol = keystone["keystone"]["api"]["protocol"]
+keystone_service_port = keystone["keystone"]["api"]["service_port"]
+keystone_admin_port = keystone["keystone"]["api"]["admin_port"]
+keystone_service_tenant = keystone["keystone"]["service"]["tenant"]
+keystone_service_user = node["neutron"]["service_user"]
+keystone_service_password = node["neutron"]["service_password"]
+Chef::Log.info("Keystone server found at #{keystone_host}")
 
 template "/etc/neutron/api-paste.ini" do
   source "api-paste.ini.erb"
@@ -39,7 +55,13 @@ template "/etc/neutron/api-paste.ini" do
   group "root"
   mode "0640"
   variables(
-    :keystone_settings => keystone_settings
+    :keystone_protocol => keystone_protocol,
+    :keystone_host => keystone_host,
+    :keystone_service_port => keystone_service_port,
+    :keystone_service_tenant => keystone_service_tenant,
+    :keystone_service_user => keystone_service_user,
+    :keystone_service_password => keystone_service_password,
+    :keystone_admin_port => keystone_admin_port
   )
 end
 
@@ -139,14 +161,6 @@ end
 
 
 include_recipe "neutron::api_register"
-
-if node[:neutron][:ha][:enabled]
-  log "HA support for neutron is enabled"
-  include_recipe "neutron::server_ha"
-else
-  log "HA support for neutron is disabled"
-end
-
 include_recipe "neutron::post_install_conf"
 
 

@@ -99,8 +99,6 @@ template node[:neutron][:platform][:neutron_rootwrap_sudo_template] do
 end
 
 
-# We can't use get_instance here because the search is done on the "neutron"
-# node, not on "node"
 env_filter = " AND rabbitmq_config_environment:rabbitmq-config-#{neutron[:neutron][:rabbitmq_instance]}"
 rabbits = search(:node, "roles:rabbitmq-server#{env_filter}") || []
 if rabbits.length > 0
@@ -109,9 +107,10 @@ if rabbits.length > 0
 else
   rabbit = node
 end
-Chef::Log.info("Rabbit server found at #{rabbit[:rabbitmq][:address]}")
+rabbit_address = Chef::Recipe::Barclamp::Inventory.get_network_by_type(rabbit, "admin").address
+Chef::Log.info("Rabbit server found at #{rabbit_address}")
 rabbit_settings = {
-  :address => rabbit[:rabbitmq][:address],
+  :address => rabbit_address,
   :port => rabbit[:rabbitmq][:port],
   :user => rabbit[:rabbitmq][:user],
   :password => rabbit[:rabbitmq][:password],

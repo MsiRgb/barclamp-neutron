@@ -18,6 +18,13 @@ def mask_to_bits(mask)
   IPAddr.new(mask).to_i.to_s(2).count("1")
 end
 
+# Wes 04/1 - Neutron server isn't 
+#            restarting after config 
+#            is applied
+service "neutron-server" do
+  action :restart
+end
+
 fixed_net = node[:network][:networks]["nova_fixed"]
 fixed_range = "#{fixed_net["subnet"]}/#{mask_to_bits(fixed_net["netmask"])}"
 fixed_router_pool_start = fixed_net[:ranges][:router][:start]
